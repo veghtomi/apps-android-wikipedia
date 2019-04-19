@@ -4,8 +4,6 @@ import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.annotation.NonNull;
-import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
@@ -15,11 +13,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.wikipedia.WikipediaApp;
 import org.wikipedia.dataclient.RestService;
+import org.wikipedia.util.log.L;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.annotation.NonNull;
 
 /**
  * Two-way communications bridge between JS in a WebView and Java.
@@ -51,6 +52,7 @@ public class CommunicationBridge {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setAllowUniversalAccessFromFileURLs(true);
         webView.setWebChromeClient(new CommunicatingChrome()); //to receive and use the error/error message that originated from js layer
+        webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
         webView.addJavascriptInterface(marshaller, "marshaller");
         eventListeners = new HashMap<>();
         this.addListener("DOMLoaded", (messageType, messagePayload) -> {
@@ -62,7 +64,7 @@ public class CommunicationBridge {
     }
 
     public void resetHtml(@NonNull String wikiUrl, String title) {
-        Log.e(WikipediaApp.TAG, "URL" + wikiUrl);
+        L.e("URL" + wikiUrl);
         isDOMReady = false;
         webView.loadUrl(wikiUrl + "/" + RestService.REST_API_PREFIX + RestService.PAGE_HTML_ENDPOINT + title);
     }
@@ -86,7 +88,7 @@ public class CommunicationBridge {
     }
 
     public void sendMessage(String messageName, JSONObject messageData) {
-        Log.e(WikipediaApp.TAG, "SENDING MESSAGE" + messageName);
+        L.e("SENDING MESSAGE" + messageName);
         String messagePointer =  marshaller.putPayload(messageData.toString());
 
         String jsString = "javascript:handleMessage( \"" + messageName + "\", \"" + messagePointer + "\" );";
@@ -117,7 +119,7 @@ public class CommunicationBridge {
     private class CommunicatingChrome extends WebChromeClient {
         @Override
         public boolean onConsoleMessage(@NonNull ConsoleMessage consoleMessage) {
-            Log.d("WikipediaWeb", consoleMessage.sourceId() + ":" + consoleMessage.lineNumber() + " - " + consoleMessage.message());
+            L.d(consoleMessage.sourceId() + ":" + consoleMessage.lineNumber() + " - " + consoleMessage.message());
             return true;
         }
     }
@@ -139,7 +141,7 @@ public class CommunicationBridge {
         }
 
         public synchronized String putPayload(String payload) {
-            Log.e(WikipediaApp.TAG, "PAYLOAD" + payload);
+            L.e("PAYLOAD" + payload);
             String key = "pointerKey_" + counter;
             counter++;
             queueItems.put(key, payload);

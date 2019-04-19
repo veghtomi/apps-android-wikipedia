@@ -2,17 +2,7 @@ package org.wikipedia.main;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.view.ActionMode;
-import android.support.v7.widget.Toolbar;
-import android.view.Gravity;
 import android.view.View;
 
 import org.wikipedia.Constants;
@@ -21,30 +11,38 @@ import org.wikipedia.WikipediaApp;
 import org.wikipedia.activity.SingleFragmentActivity;
 import org.wikipedia.appshortcuts.AppShortcuts;
 import org.wikipedia.auth.AccountUtil;
-import org.wikipedia.editactionfeed.EditTasksActivity;
 import org.wikipedia.feed.FeedFragment;
 import org.wikipedia.history.HistoryFragment;
 import org.wikipedia.navtab.NavTab;
 import org.wikipedia.notifications.NotificationActivity;
 import org.wikipedia.onboarding.InitialOnboardingActivity;
+import org.wikipedia.onboarding.SuggestedEditsOnboardingActivity;
 import org.wikipedia.readinglist.ReadingListSyncBehaviorDialogs;
 import org.wikipedia.readinglist.database.ReadingListDbHelper;
 import org.wikipedia.settings.AboutActivity;
 import org.wikipedia.settings.Prefs;
 import org.wikipedia.settings.SettingsActivity;
+import org.wikipedia.suggestededits.SuggestedEditsTasksActivity;
 import org.wikipedia.util.AnimationUtil;
 import org.wikipedia.util.DimenUtil;
 import org.wikipedia.util.FeedbackUtil;
-import org.wikipedia.util.ReleaseUtil;
 import org.wikipedia.views.WikiDrawerLayout;
 
+import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.view.ActionMode;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Completable;
 import io.reactivex.schedulers.Schedulers;
 
-import static android.view.Gravity.START;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static org.wikipedia.Constants.ACTIVITY_REQUEST_INITIAL_ONBOARDING;
@@ -146,11 +144,11 @@ public class MainActivity extends SingleFragmentActivity<MainFragment>
     }
 
     void setUpHomeMenuIcon() {
-        drawerIconDot.setVisibility(AccountUtil.isLoggedIn() && Prefs.showActionFeedIndicator() && ReleaseUtil.isPreBetaRelease() ? VISIBLE : GONE);
+        drawerIconDot.setVisibility(AccountUtil.isLoggedIn() && Prefs.showActionFeedIndicator() ? VISIBLE : GONE);
     }
 
     @OnClick(R.id.drawer_icon_layout) void onDrawerOpenClicked() {
-        drawerLayout.openDrawer(START);
+        drawerLayout.openDrawer(GravityCompat.START);
     }
 
     @Override
@@ -197,8 +195,8 @@ public class MainActivity extends SingleFragmentActivity<MainFragment>
 
     @Override
     public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(Gravity.START)) {
-            drawerLayout.closeDrawer(Gravity.START);
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
             return;
         }
         if (getFragment().onBackPressed()) {
@@ -236,28 +234,30 @@ public class MainActivity extends SingleFragmentActivity<MainFragment>
     }
 
     protected void setToolbarElevationDefault() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getToolbar().setElevation(DimenUtil
-                    .dpToPx(DimenUtil.getDimension(R.dimen.toolbar_default_elevation)));
-        }
+        getToolbar().setElevation(DimenUtil.dpToPx(DimenUtil.getDimension(R.dimen.toolbar_default_elevation)));
     }
 
     protected void clearToolbarElevation() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getToolbar().setElevation(0f);
-        }
+        getToolbar().setElevation(0f);
     }
 
     private class DrawerViewCallback implements MainDrawerView.Callback {
         @Override public void loginLogoutClick() {
             if (AccountUtil.isLoggedIn()) {
-                WikipediaApp.getInstance().logOut();
-                FeedbackUtil.showMessage(MainActivity.this, R.string.toast_logout_complete);
-                if (Prefs.isReadingListSyncEnabled() && !ReadingListDbHelper.instance().isEmpty()) {
-                    ReadingListSyncBehaviorDialogs.removeExistingListsOnLogoutDialog(MainActivity.this);
-                }
-                Prefs.setReadingListsLastSyncTime(null);
-                Prefs.setReadingListSyncEnabled(false);
+                new AlertDialog.Builder(MainActivity.this)
+                        .setMessage(R.string.logout_prompt)
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(R.string.preference_title_logout, (dialog, which) -> {
+                            WikipediaApp.getInstance().logOut();
+                            FeedbackUtil.showMessage(MainActivity.this, R.string.toast_logout_complete);
+                            if (Prefs.isReadingListSyncEnabled() && !ReadingListDbHelper.instance().isEmpty()) {
+                                ReadingListSyncBehaviorDialogs.removeExistingListsOnLogoutDialog(MainActivity.this);
+                            }
+                            Prefs.setReadingListsLastSyncTime(null);
+                            Prefs.setReadingListSyncEnabled(false);
+                            Prefs.setSuggestedEditsAddDescriptionsUnlocked(false);
+                            Prefs.setSuggestedEditsTranslateDescriptionsUnlocked(false);
+                        }).show();
             } else {
                 getFragment().onLoginRequested();
             }
@@ -287,7 +287,10 @@ public class MainActivity extends SingleFragmentActivity<MainFragment>
         public void editingTasksClick() {
             Prefs.setShowEditMenuOptionIndicator(false);
             drawerView.maybeShowIndicatorDots();
-            startActivity(EditTasksActivity.newIntent(MainActivity.this));
+
+            startActivity(Prefs.showEditTaskOnboarding() ? SuggestedEditsOnboardingActivity.Companion.newIntent(MainActivity.this, Constants.InvokeSource.MAIN_ACTIVITY)
+                    : SuggestedEditsTasksActivity.newIntent(MainActivity.this, Constants.InvokeSource.MAIN_ACTIVITY));
+
             closeMainDrawer();
         }
 

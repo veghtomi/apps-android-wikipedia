@@ -3,10 +3,6 @@ package org.wikipedia.page;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Build;
-import android.support.annotation.DimenRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
@@ -49,6 +45,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -369,7 +368,7 @@ public class PageFragmentLoadState {
     private void pageLoadDisplayLeadSection() {
         Page page = model.getPage();
 
-        sendMarginPayload();
+        bridge.sendMessage("setMargins", marginPayload());
 
         sendLeadSectionPayload(page);
 
@@ -385,19 +384,10 @@ public class PageFragmentLoadState {
         }
     }
 
-    private void sendMarginPayload() {
-        JSONObject marginPayload = marginPayload();
-        bridge.sendMessage("setMargins", marginPayload);
-    }
-
     private JSONObject marginPayload() {
-        int horizontalMargin = DimenUtil.roundedPxToDp(getDimension(R.dimen.content_margin));
-        int verticalMargin = DimenUtil.roundedPxToDp(getDimension(R.dimen.activity_vertical_margin));
         try {
             return new JSONObject()
-                    .put("marginTop", verticalMargin)
-                    .put("marginLeft", horizontalMargin)
-                    .put("marginRight", horizontalMargin);
+                    .put("marginTop", DimenUtil.roundedPxToDp(getResources().getDimension(R.dimen.activity_vertical_margin)));
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
@@ -432,7 +422,7 @@ public class PageFragmentLoadState {
                 .put("showImages", Prefs.isImageDownloadEnabled())
                 .put("collapseTables", Prefs.isCollapseTablesEnabled())
                 .put("theme", app.getCurrentTheme().getMarshallingId())
-                .put("dimImages", Prefs.shouldDimDarkModeImages());
+                .put("dimImages", app.getCurrentTheme().isDark() && Prefs.shouldDimDarkModeImages());
     }
 
     private JSONObject leadSectionPayload(@NonNull Page page) {
@@ -447,7 +437,7 @@ public class PageFragmentLoadState {
 
     private SparseArray<String> localizedStrings(Page page) {
         return getStringsForArticleLanguage(page.getTitle(),
-                ResourceUtil.getIdArray(fragment.getContext(), R.array.page_localized_string_ids));
+                ResourceUtil.getIdArray(fragment.requireContext(), R.array.page_localized_string_ids));
     }
 
 
@@ -483,7 +473,7 @@ public class PageFragmentLoadState {
         try {
             String dateStr = DateUtil.getShortDateString(DateUtil
                     .getHttpLastModifiedDate(dateHeader));
-            Toast.makeText(fragment.getContext().getApplicationContext(),
+            Toast.makeText(fragment.requireContext().getApplicationContext(),
                     fragment.getString(R.string.page_offline_notice_last_date, dateStr),
                     Toast.LENGTH_LONG).show();
         } catch (ParseException e) {
@@ -570,10 +560,6 @@ public class PageFragmentLoadState {
                                     model.getTitle().getPrefixedText());
 
         queueRemainingSections(request);
-    }
-
-    private float getDimension(@DimenRes int id) {
-        return getResources().getDimension(id);
     }
 
     private Resources getResources() {

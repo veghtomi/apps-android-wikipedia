@@ -3,10 +3,6 @@ package org.wikipedia.search;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.util.LruCache;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +12,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import org.apache.commons.lang3.StringUtils;
+import org.wikipedia.Constants.InvokeSource;
 import org.wikipedia.LongPressHandler;
 import org.wikipedia.R;
 import org.wikipedia.WikipediaApp;
@@ -25,7 +22,6 @@ import org.wikipedia.dataclient.ServiceFactory;
 import org.wikipedia.dataclient.WikiSite;
 import org.wikipedia.history.HistoryEntry;
 import org.wikipedia.page.PageTitle;
-import org.wikipedia.readinglist.AddToReadingListDialog;
 import org.wikipedia.util.StringUtil;
 import org.wikipedia.views.GoneIfEmptyTextView;
 import org.wikipedia.views.ViewUtil;
@@ -35,6 +31,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.collection.LruCache;
+import androidx.fragment.app.Fragment;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -45,12 +45,12 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.wikipedia.util.L10nUtil.setConditionalLayoutDirection;
 
 public class SearchResultsFragment extends Fragment {
     public interface Callback {
         void onSearchResultCopyLink(@NonNull PageTitle title);
-        void onSearchResultAddToList(@NonNull PageTitle title,
-                                     @NonNull AddToReadingListDialog.InvokeSource source);
+        void onSearchResultAddToList(@NonNull PageTitle title, @NonNull InvokeSource source);
         void onSearchResultShareLink(@NonNull PageTitle title);
         void onSearchProgressBar(boolean enabled);
         void navigateToTitle(@NonNull PageTitle item, boolean inNewTab, int position);
@@ -149,6 +149,10 @@ public class SearchResultsFragment extends Fragment {
 
     public boolean isShowing() {
         return searchResultsDisplay.getVisibility() == View.VISIBLE;
+    }
+
+    public void setLayoutDirection(@NonNull String langCode) {
+        setConditionalLayoutDirection(searchResultsList, langCode);
     }
 
     /**
@@ -450,8 +454,7 @@ public class SearchResultsFragment extends Fragment {
         }
 
         @Override
-        public void onAddToList(@NonNull PageTitle title,
-                                @NonNull AddToReadingListDialog.InvokeSource source) {
+        public void onAddToList(@NonNull PageTitle title, @NonNull InvokeSource source) {
             Callback callback = callback();
             if (callback != null) {
                 callback.onSearchResultAddToList(title, source);

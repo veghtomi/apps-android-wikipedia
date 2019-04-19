@@ -15,11 +15,12 @@
         android:background="?attr/page_toolbar_color"
         android:elevation="6dp">
 
-        <android.support.v7.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/search_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:theme="@style/PageToolbarTheme"
+            android:paddingStart="-2dp"
             app:navigationIcon="@drawable/ic_arrow_back_themed_24dp">
 
             <LinearLayout
@@ -35,9 +36,10 @@
                     android:layout_weight="1"
                     android:focusable="true"
                     android:inputType="text"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginStart="-8dp"
-                    android:imeOptions="actionGo|flagNoExtractUi"/>
+                    android:layout_marginStart="-16dp"
+                    android:layout_marginEnd="2dp"
+                    android:imeOptions="actionGo|flagNoExtractUi"
+                    app:defaultQueryHint="@string/search_hint"/>
 
                 <FrameLayout
                     android:layout_width="wrap_content"
@@ -66,7 +68,7 @@
 
             </LinearLayout>
 
-        </android.support.v7.widget.Toolbar>
+        </androidx.appcompat.widget.Toolbar>
 
         <ProgressBar
             android:id="@+id/search_progress_bar"

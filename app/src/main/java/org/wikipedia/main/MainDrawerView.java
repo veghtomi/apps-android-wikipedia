@@ -2,7 +2,6 @@ package org.wikipedia.main;
 
 import android.content.Context;
 import android.net.Uri;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +14,10 @@ import org.wikipedia.R;
 import org.wikipedia.WikipediaApp;
 import org.wikipedia.auth.AccountUtil;
 import org.wikipedia.settings.Prefs;
-import org.wikipedia.util.ReleaseUtil;
 import org.wikipedia.util.ResourceUtil;
 import org.wikipedia.util.UriUtil;
 
+import androidx.annotation.Nullable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -70,7 +69,7 @@ public class MainDrawerView extends ScrollView {
             accountAvatar.setVisibility(View.VISIBLE);
             accountWikiGlobe.setVisibility(View.GONE);
             notificationsContainer.setVisibility(View.VISIBLE);
-            if (ReleaseUtil.isPreBetaRelease() && Prefs.isActionEditDescriptionsUnlocked()) {
+            if (Prefs.isSuggestedEditsAddDescriptionsUnlocked()) {
                 editTasksContainer.setVisibility(VISIBLE);
             }
             maybeShowIndicatorDots();

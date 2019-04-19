@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.preference.PreferenceScreen
+<androidx.preference.PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory android:title="@string/preferences_developer_feature_testing_heading">
@@ -251,10 +251,6 @@
             android:key="@string/preference_key_show_remove_chinese_variant_prompt"
             android:title="@string/preference_key_show_remove_chinese_variant_prompt" />
 
-        <SwitchPreferenceCompat
-            android:key="@string/preference_key_show_edit_action_add_title_descriptions_onboarding"
-            android:title="@string/preference_key_show_edit_action_add_title_descriptions_onboarding" />
-
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/preferences_developer_reading_list_category">
@@ -290,4 +286,32 @@
 
     </PreferenceCategory>
 
-</android.support.v7.preference.PreferenceScreen>
+    <PreferenceCategory android:title="@string/preferences_developer_suggested_edits_category">
+
+        <SwitchPreferenceCompat
+            android:key="@string/preference_key_suggested_edits_add_descriptions_unlocked"
+            android:title="@string/preference_key_suggested_edits_add_descriptions_unlocked" />
+
+        <SwitchPreferenceCompat
+            android:key="@string/preference_key_suggested_edits_translate_descriptions_unlocked"
+            android:title="@string/preference_key_suggested_edits_translate_descriptions_unlocked" />
+
+        <Preference
+            android:key="@string/preferences_developer_suggested_edits_add_description_dialog"
+            android:title="@string/preferences_developer_suggested_edits_add_description_dialog"/>
+
+        <Preference
+            android:key="@string/preferences_developer_suggested_edits_add_description_notification"
+            android:title="@string/preferences_developer_suggested_edits_add_description_notification"/>
+
+        <Preference
+            android:key="@string/preferences_developer_suggested_edits_translate_description_dialog"
+            android:title="@string/preferences_developer_suggested_edits_translate_description_dialog"/>
+
+        <Preference
+            android:key="@string/preferences_developer_suggested_edits_translate_description_notification"
+            android:title="@string/preferences_developer_suggested_edits_translate_description_notification"/>
+
+    </PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>

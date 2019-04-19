@@ -9,17 +9,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomSheetDialog;
-import android.support.design.widget.BottomSheetDialogFragment;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -29,10 +19,14 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.wikipedia.BackPressedHandler;
 import org.wikipedia.Constants;
+import org.wikipedia.Constants.InvokeSource;
 import org.wikipedia.LongPressHandler;
 import org.wikipedia.R;
 import org.wikipedia.WikipediaApp;
@@ -49,7 +43,6 @@ import org.wikipedia.dataclient.okhttp.OkHttpWebViewClient;
 import org.wikipedia.descriptions.DescriptionEditActivity;
 import org.wikipedia.descriptions.DescriptionEditTutorialActivity;
 import org.wikipedia.edit.EditHandler;
-import org.wikipedia.editactionfeed.AddTitleDescriptionsActivity;
 import org.wikipedia.gallery.GalleryActivity;
 import org.wikipedia.history.HistoryEntry;
 import org.wikipedia.history.UpdateHistoryTask;
@@ -65,7 +58,6 @@ import org.wikipedia.page.leadimages.LeadImagesHandler;
 import org.wikipedia.page.leadimages.PageHeaderView;
 import org.wikipedia.page.shareafact.ShareHandler;
 import org.wikipedia.page.tabs.Tab;
-import org.wikipedia.readinglist.AddToReadingListDialog;
 import org.wikipedia.readinglist.ReadingListBookmarkMenu;
 import org.wikipedia.readinglist.database.ReadingListDbHelper;
 import org.wikipedia.readinglist.database.ReadingListPage;
@@ -86,6 +78,13 @@ import org.wikipedia.views.WikiPageErrorView;
 import java.util.Date;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -93,6 +92,9 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
 import static android.app.Activity.RESULT_OK;
+import static org.wikipedia.Constants.ACTIVITY_REQUEST_GALLERY;
+import static org.wikipedia.Constants.InvokeSource.BOOKMARK_BUTTON;
+import static org.wikipedia.Constants.InvokeSource.PAGE_ACTIVITY;
 import static org.wikipedia.descriptions.DescriptionEditTutorialActivity.DESCRIPTION_SELECTED_TEXT;
 import static org.wikipedia.page.PageActivity.ACTION_RESUME_READING;
 import static org.wikipedia.page.PageCacher.loadIntoCache;
@@ -120,10 +122,8 @@ public class PageFragment extends Fragment implements BackPressedHandler {
         void onPageUpdateProgressBar(boolean visible, boolean indeterminate, int value);
         void onPageShowThemeChooser();
         void onPageStartSupportActionMode(@NonNull ActionMode.Callback callback);
-        void onPageShowToolbar();
         void onPageHideSoftKeyboard();
-        void onPageAddToReadingList(@NonNull PageTitle title,
-                                    @NonNull AddToReadingListDialog.InvokeSource source);
+        void onPageAddToReadingList(@NonNull PageTitle title, @NonNull InvokeSource source);
         void onPageRemoveFromReadingLists(@NonNull PageTitle title);
         void onPageLoadError(@NonNull PageTitle title);
         void onPageLoadErrorBackPressed();
@@ -177,7 +177,7 @@ public class PageFragment extends Fragment implements BackPressedHandler {
                 new ReadingListBookmarkMenu(tabLayout, new ReadingListBookmarkMenu.Callback() {
                     @Override
                     public void onAddRequest(@Nullable ReadingListPage page) {
-                        addToReadingList(getTitle(), AddToReadingListDialog.InvokeSource.BOOKMARK_BUTTON);
+                        addToReadingList(getTitle(), BOOKMARK_BUTTON);
                     }
 
                     @Override
@@ -193,7 +193,7 @@ public class PageFragment extends Fragment implements BackPressedHandler {
                     }
                 }).show(getTitle());
             } else {
-                addToReadingList(getTitle(), AddToReadingListDialog.InvokeSource.BOOKMARK_BUTTON);
+                addToReadingList(getTitle(), BOOKMARK_BUTTON);
             }
         }
 
@@ -496,15 +496,12 @@ public class PageFragment extends Fragment implements BackPressedHandler {
         return app.getTabList().get(app.getTabList().size() - 1);
     }
 
-    private void setCurrentTab(int position, boolean updatePrevBackStackItem) {
+    private void setCurrentTab(int position) {
         // move the selected tab to the bottom of the list, and navigate to it!
         // (but only if it's a different tab than the one currently in view!
         if (position < app.getTabList().size() - 1) {
             Tab tab = app.getTabList().remove(position);
             app.getTabList().add(tab);
-            if (updatePrevBackStackItem) {
-                pageFragmentLoadState.updateCurrentBackStackItem();
-            }
             pageFragmentLoadState.setTab(tab);
             pageFragmentLoadState.loadFromBackStack();
         }
@@ -553,7 +550,7 @@ public class PageFragment extends Fragment implements BackPressedHandler {
         if (selectedTabPosition == app.getTabList().size() - 1) {
             pageFragmentLoadState.loadFromBackStack();
         } else {
-            setCurrentTab(selectedTabPosition, false);
+            setCurrentTab(selectedTabPosition);
         }
     }
 
@@ -672,7 +669,6 @@ public class PageFragment extends Fragment implements BackPressedHandler {
             startDescriptionEditActivity(data.getStringExtra(DESCRIPTION_SELECTED_TEXT));
         } else if (requestCode == Constants.ACTIVITY_REQUEST_DESCRIPTION_EDIT
                 && resultCode == RESULT_OK) {
-            AddTitleDescriptionsActivity.Companion.maybeShowEditUnlockDialog(requireActivity());
             refreshPage();
         }
     }
@@ -733,7 +729,6 @@ public class PageFragment extends Fragment implements BackPressedHandler {
                 funnel.setPageHeight(webView.getContentHeight());
                 funnel.logDone();
                 webView.clearMatches();
-                showToolbar();
                 hideSoftKeyboard();
                 setToolbarElevationEnabled(true);
             }
@@ -926,7 +921,7 @@ public class PageFragment extends Fragment implements BackPressedHandler {
             protected void onReferenceClicked(int selectedIndex, @NonNull List<Reference> adjacentReferences) {
 
                 if (!isAdded()) {
-                    Log.d("PageFragment", "Detached from activity, so stopping reference click.");
+                    L.d("Detached from activity, so stopping reference click.");
                     return;
                 }
 
@@ -953,7 +948,7 @@ public class PageFragment extends Fragment implements BackPressedHandler {
                     requireActivity().startActivityForResult(GalleryActivity.newIntent(requireActivity(),
                             model.getTitleOriginal(), filename, fileUrl, wiki,
                             GalleryFunnel.SOURCE_NON_LEAD_IMAGE),
-                            Constants.ACTIVITY_REQUEST_GALLERY);
+                            ACTIVITY_REQUEST_GALLERY);
                 } else {
                     linkHandler.onUrlClick(href, messagePayload.optString("title"), "");
                 }
@@ -969,7 +964,7 @@ public class PageFragment extends Fragment implements BackPressedHandler {
                 requireActivity().startActivityForResult(GalleryActivity.newIntent(requireActivity(),
                         model.getTitleOriginal(), filename, wiki,
                         GalleryFunnel.SOURCE_NON_LEAD_IMAGE),
-                        Constants.ACTIVITY_REQUEST_GALLERY);
+                        ACTIVITY_REQUEST_GALLERY);
             } catch (JSONException e) {
                 L.logRemoteErrorIfProd(e);
             }
@@ -1014,7 +1009,7 @@ public class PageFragment extends Fragment implements BackPressedHandler {
             startActivityForResult(DescriptionEditTutorialActivity.newIntent(requireContext(), text),
                     Constants.ACTIVITY_REQUEST_DESCRIPTION_EDIT_TUTORIAL);
         } else {
-            startActivityForResult(DescriptionEditActivity.newIntent(requireContext(), getTitle(), text, false, DescriptionEditActivity.PAGE_SOURCE, null),
+            startActivityForResult(DescriptionEditActivity.newIntent(requireContext(), getTitle(), text, PAGE_ACTIVITY),
                     Constants.ACTIVITY_REQUEST_DESCRIPTION_EDIT);
         }
     }
@@ -1142,13 +1137,6 @@ public class PageFragment extends Fragment implements BackPressedHandler {
         }
     }
 
-    public void showToolbar() {
-        Callback callback = callback();
-        if (callback != null) {
-            callback.onPageShowToolbar();
-        }
-    }
-
     public void hideSoftKeyboard() {
         Callback callback = callback();
         if (callback != null) {
@@ -1163,7 +1151,7 @@ public class PageFragment extends Fragment implements BackPressedHandler {
         }
     }
 
-    public void addToReadingList(@NonNull PageTitle title, @NonNull AddToReadingListDialog.InvokeSource source) {
+    public void addToReadingList(@NonNull PageTitle title, @NonNull InvokeSource source) {
         Callback callback = callback();
         if (callback != null) {
             callback.onPageAddToReadingList(title, source);

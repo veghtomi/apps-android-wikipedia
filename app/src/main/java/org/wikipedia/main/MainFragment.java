@@ -9,12 +9,6 @@ import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.ViewCompat;
-import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -64,12 +58,20 @@ import org.wikipedia.util.log.L;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.view.ViewCompat;
+import androidx.fragment.app.Fragment;
+import androidx.viewpager.widget.ViewPager;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnPageChange;
 import butterknife.Unbinder;
 
 import static org.wikipedia.Constants.ACTIVITY_REQUEST_OPEN_SEARCH_ACTIVITY;
+import static org.wikipedia.Constants.InvokeSource.FEED;
+import static org.wikipedia.Constants.InvokeSource.LINK_PREVIEW_MENU;
 
 public class MainFragment extends Fragment implements BackPressedHandler, FeedFragment.Callback,
         NearbyFragment.Callback, HistoryFragment.Callback, FloatingQueueView.Callback,
@@ -248,8 +250,7 @@ public class MainFragment extends Fragment implements BackPressedHandler, FeedFr
 
     @Override public void onFeedAddPageToList(HistoryEntry entry) {
         bottomSheetPresenter.show(getChildFragmentManager(),
-                AddToReadingListDialog.newInstance(entry.getTitle(),
-                        AddToReadingListDialog.InvokeSource.FEED));
+                AddToReadingListDialog.newInstance(entry.getTitle(), FEED));
     }
 
     @Override
@@ -358,8 +359,7 @@ public class MainFragment extends Fragment implements BackPressedHandler, FeedFr
     @Override
     public void onLinkPreviewAddToList(@NonNull PageTitle title) {
         bottomSheetPresenter.show(getChildFragmentManager(),
-                AddToReadingListDialog.newInstance(title,
-                        AddToReadingListDialog.InvokeSource.LINK_PREVIEW_MENU));
+                AddToReadingListDialog.newInstance(title, LINK_PREVIEW_MENU));
     }
 
     @Override

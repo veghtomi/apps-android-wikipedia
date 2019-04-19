@@ -1,16 +1,12 @@
 package org.wikipedia.util;
 
 import android.os.Build;
-import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.TextUtils;
-import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -27,6 +23,10 @@ import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public final class StringUtil {
     private static final String CSV_DELIMITER = ",";
@@ -181,9 +181,7 @@ public final class StringUtil {
         for (String subString : subStrings) {
             int index = text.toLowerCase().indexOf(subString.toLowerCase());
             if (index != -1) {
-                sb.setSpan(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                        ? new TypefaceSpan("sans-serif-medium")
-                        : new StyleSpan(android.graphics.Typeface.BOLD),
+                sb.setSpan(new TypefaceSpan("sans-serif-medium"),
                         index, index + subString.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
             }
         }

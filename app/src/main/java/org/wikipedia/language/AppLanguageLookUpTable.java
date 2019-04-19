@@ -2,9 +2,6 @@ package org.wikipedia.language;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.support.annotation.ArrayRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import org.wikipedia.R;
@@ -13,6 +10,10 @@ import java.lang.ref.SoftReference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+
+import androidx.annotation.ArrayRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /** Immutable look up table for all app supported languages. All article languages may not be
   * present in this table as it is statically bundled with the app. */
@@ -65,8 +66,8 @@ public class AppLanguageLookUpTable {
     public String getCanonicalName(@Nullable String code) {
         String name = defaultIndex(getCanonicalNames(), indexOfCode(code), null);
         if (TextUtils.isEmpty(name) && !TextUtils.isEmpty(code)) {
-            if (code.equals(Locale.CHINA.getLanguage())) {
-                name = Locale.CHINA.getDisplayName(Locale.ENGLISH);
+            if (code.equals(Locale.CHINESE.getLanguage())) {
+                name = Locale.CHINESE.getDisplayName(Locale.ENGLISH);
             } else if (code.equals(NORWEGIAN_LEGACY_LANGUAGE_CODE)) {
                 name = defaultIndex(getCanonicalNames(), indexOfCode(NORWEGIAN_BOKMAL_LANGUAGE_CODE), null);
             }
@@ -78,8 +79,8 @@ public class AppLanguageLookUpTable {
     public String getLocalizedName(@Nullable String code) {
         String name = defaultIndex(getLocalizedNames(), indexOfCode(code), null);
         if (TextUtils.isEmpty(name) && !TextUtils.isEmpty(code)) {
-            if (code.equals(Locale.CHINA.getLanguage())) {
-                name = Locale.CHINA.getDisplayName(Locale.CHINA);
+            if (code.equals(Locale.CHINESE.getLanguage())) {
+                name = Locale.CHINESE.getDisplayName(Locale.CHINESE);
             } else if (code.equals(NORWEGIAN_LEGACY_LANGUAGE_CODE)) {
                 name = defaultIndex(getLocalizedNames(), indexOfCode(NORWEGIAN_BOKMAL_LANGUAGE_CODE), null);
             }

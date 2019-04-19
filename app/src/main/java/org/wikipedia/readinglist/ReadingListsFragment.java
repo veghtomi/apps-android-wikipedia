@@ -1,18 +1,9 @@
 package org.wikipedia.readinglist;
 
 import android.animation.LayoutTransition;
+import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.util.DiffUtil;
-import android.support.v7.view.ActionMode;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -64,6 +55,16 @@ import org.wikipedia.views.ViewUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ActionMode;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
@@ -72,6 +73,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
+import static org.wikipedia.Constants.InvokeSource.READING_LIST_ACTIVITY;
 import static org.wikipedia.readinglist.database.ReadingList.SORT_BY_NAME_ASC;
 import static org.wikipedia.readinglist.database.ReadingList.SORT_BY_NAME_DESC;
 import static org.wikipedia.readinglist.database.ReadingList.SORT_BY_RECENT_ASC;
@@ -105,6 +107,7 @@ public class ReadingListsFragment extends Fragment implements
     private OverflowCallback overflowCallback = new OverflowCallback();
     private String currentSearchQuery;
     private static final int SAVE_COUNT_LIMIT = 3;
+    public static final int ARTICLE_ITEM_IMAGE_DIMENSION = 57;
 
     @NonNull public static ReadingListsFragment newInstance() {
         return new ReadingListsFragment();
@@ -209,8 +212,7 @@ public class ReadingListsFragment extends Fragment implements
     @Override
     public void onAddItemToOther(@NonNull ReadingListPage page) {
         bottomSheetPresenter.show(getChildFragmentManager(),
-                AddToReadingListDialog.newInstance(ReadingListPage.toPageTitle(page),
-                        AddToReadingListDialog.InvokeSource.READING_LIST_ACTIVITY));
+                AddToReadingListDialog.newInstance(ReadingListPage.toPageTitle(page), READING_LIST_ACTIVITY));
     }
 
     @Override
@@ -442,6 +444,7 @@ public class ReadingListsFragment extends Fragment implements
             getView().setDescriptionMaxLines(2);
             getView().setDescriptionEllipsis();
             getView().setImageUrl(page.thumbUrl());
+            getView().setListItemImageDimensions(DimenUtil.roundedDpToPx(ARTICLE_ITEM_IMAGE_DIMENSION), DimenUtil.roundedDpToPx(ARTICLE_ITEM_IMAGE_DIMENSION));
             getView().setSelected(page.selected());
             getView().setActionIcon(R.drawable.ic_more_vert_white_24dp);
             getView().setActionTint(R.attr.secondary_text_color);
@@ -689,6 +692,11 @@ public class ReadingListsFragment extends Fragment implements
         @Override
         protected boolean finishActionModeIfKeyboardHiding() {
             return true;
+        }
+
+        @Override
+        protected Context getParentContext() {
+            return requireContext();
         }
     }
 

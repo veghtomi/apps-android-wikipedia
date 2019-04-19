@@ -9,7 +9,7 @@
     android:layout_gravity="bottom"
     app:behavior_peekHeight="@dimen/bottomSheetPeekHeight">
 
-    <android.support.v4.widget.NestedScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -29,14 +29,13 @@
             android:background="?attr/selectableItemBackground"
             android:minHeight="64dp">
             <com.facebook.drawee.view.SimpleDraweeView
-                style="@style/SimpleDraweeViewPlaceholder.Article"
+                style="@style/SimpleDraweeViewPlaceholder"
                 android:id="@+id/link_preview_thumbnail"
                 android:layout_width="@dimen/defaultListItemSize"
                 android:layout_height="@dimen/defaultListItemSize"
                 android:layout_margin="16dp"
                 android:layout_gravity="center_vertical"
-                android:contentDescription="@null"
-                app:backgroundImage="@color/base100"/>
+                android:contentDescription="@null"/>
             <TextView
                 android:id="@+id/link_preview_title"
                 android:layout_width="0dp"
@@ -51,7 +50,7 @@
                 android:maxLines="3"
                 android:ellipsize="end"
                 tools:text="Lorem ipsum" />
-            <android.support.v7.widget.AppCompatImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/link_preview_overflow_button"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
@@ -110,7 +109,7 @@
             android:layout_height="70dp"/>
     </LinearLayout>
 
-    </android.support.v4.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <ProgressBar
         android:id="@+id/link_preview_progress"

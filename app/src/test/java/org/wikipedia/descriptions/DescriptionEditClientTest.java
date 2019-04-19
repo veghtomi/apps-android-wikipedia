@@ -1,7 +1,5 @@
 package org.wikipedia.descriptions;
 
-import android.support.annotation.NonNull;
-
 import com.google.gson.stream.MalformedJsonException;
 
 import org.junit.Test;
@@ -17,6 +15,7 @@ import org.wikipedia.test.MockRetrofitTest;
 
 import java.util.Collections;
 
+import androidx.annotation.NonNull;
 import io.reactivex.observers.TestObserver;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -121,7 +120,7 @@ public class DescriptionEditClientTest extends MockRetrofitTest {
         final PageTitle pageTitle = new PageTitle("foo", WikiSite.forLanguageCode("en"));
         getApiService().postDescriptionEdit(pageTitle.getWikiSite().languageCode(),
                 pageTitle.getWikiSite().languageCode(), pageTitle.getWikiSite().dbName(),
-                pageTitle.getPrefixedText(), "some new description", MOCK_EDIT_TOKEN, null)
+                pageTitle.getPrefixedText(), "some new description", "summary", MOCK_EDIT_TOKEN, null)
                 .subscribe(observer);
     }
 }

@@ -7,9 +7,6 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatDelegate;
 import android.text.TextUtils;
 import android.view.Window;
 import android.webkit.WebView;
@@ -56,9 +53,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.internal.functions.Functions;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -155,11 +156,7 @@ public class WikipediaApp extends Application {
         // https://developer.android.com/topic/performance/background-optimization.html#connectivity-action
         registerReceiver(connectivityReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
-        // HockeyApp exception handling interferes with the test runner, so enable it only for
-        // beta and stable releases
-        if (!ReleaseUtil.isPreBetaRelease()) {
-            initExceptionHandling();
-        }
+        initExceptionHandling();
 
         refWatcher = Prefs.isMemoryLeakTestEnabled() ? LeakCanary.install(this) : RefWatcher.DISABLED;
 
@@ -177,6 +174,8 @@ public class WikipediaApp extends Application {
         currentTheme = unmarshalCurrentTheme();
 
         appLanguageState = new AppLanguageState(this);
+        updateCrashReportProps();
+
         funnelManager = new FunnelManager(this);
         sessionFunnel = new SessionFunnel(this);
         database = new Database(this);
@@ -371,6 +370,7 @@ public class WikipediaApp extends Application {
 
     public synchronized void resetWikiSite() {
         wiki = null;
+        updateCrashReportProps();
     }
 
     public void logOut() {
@@ -380,8 +380,20 @@ public class WikipediaApp extends Application {
     }
 
     private void initExceptionHandling() {
-        crashReporter = new HockeyAppCrashReporter(getString(R.string.hockeyapp_app_id), consentAccessor());
-        L.setRemoteLogger(crashReporter);
+        // HockeyApp exception handling interferes with the test runner, so enable it only for beta and stable releases
+        if (!ReleaseUtil.isPreBetaRelease()) {
+            crashReporter = new HockeyAppCrashReporter(getString(R.string.hockeyapp_app_id), consentAccessor());
+            L.setRemoteLogger(crashReporter);
+        }
+    }
+
+    private void updateCrashReportProps() {
+        // HockeyApp exception handling interferes with the test runner, so enable it only for beta and stable releases
+        if (!ReleaseUtil.isPreBetaRelease()) {
+            putCrashReportProperty("locale", Locale.getDefault().toString());
+            putCrashReportProperty("app_primary_language", appLanguageState.getAppLanguageCode());
+            putCrashReportProperty("app_languages", appLanguageState.getAppLanguageCodes().toString());
+        }
     }
 
     private HockeyAppCrashReporter.AutoUploadConsentAccessor consentAccessor() {
@@ -435,5 +447,9 @@ public class WikipediaApp extends Application {
 
     public boolean haveMainActivity() {
         return activityLifecycleHandler.haveMainActivity();
+    }
+
+    public boolean isAnyActivityResumed() {
+        return activityLifecycleHandler.isAnyActivityResumed();
     }
 }

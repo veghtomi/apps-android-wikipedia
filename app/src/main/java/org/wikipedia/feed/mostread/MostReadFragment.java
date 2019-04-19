@@ -1,12 +1,6 @@
 package org.wikipedia.feed.mostread;
 
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,11 +22,19 @@ import org.wikipedia.views.DrawableItemDecoration;
 
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
+import static org.wikipedia.Constants.InvokeSource.MOST_READ_ACTIVITY;
 import static org.wikipedia.feed.mostread.MostReadArticlesActivity.MOST_READ_CARD;
+import static org.wikipedia.util.L10nUtil.setConditionalLayoutDirection;
 
 public class MostReadFragment extends Fragment {
 
@@ -58,6 +60,7 @@ public class MostReadFragment extends Fragment {
         MostReadListCard card = GsonUnmarshaller.unmarshal(MostReadListCard.class, requireActivity().getIntent().getStringExtra(MOST_READ_CARD));
 
         getAppCompatActivity().getSupportActionBar().setTitle(String.format(getString(R.string.top_on_this_day), card.subtitle()));
+        setConditionalLayoutDirection(view, card.wikiSite().languageCode());
 
         initRecycler();
         mostReadLinks.setAdapter(new RecyclerAdapter(card.items(), new Callback()));
@@ -115,8 +118,7 @@ public class MostReadFragment extends Fragment {
         @Override
         public void onAddPageToList(@NonNull HistoryEntry entry) {
             bottomSheetPresenter.show(getChildFragmentManager(),
-                    AddToReadingListDialog.newInstance(entry.getTitle(),
-                            AddToReadingListDialog.InvokeSource.MOST_READ_ACTIVITY));
+                    AddToReadingListDialog.newInstance(entry.getTitle(), MOST_READ_ACTIVITY));
         }
 
         @Override

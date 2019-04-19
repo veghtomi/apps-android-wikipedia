@@ -7,19 +7,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomSheetDialog;
-import android.support.design.widget.BottomSheetDialogFragment;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.view.ViewCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.preference.PreferenceManager;
-import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.view.ActionMode;
 import android.view.KeyEvent;
@@ -33,7 +24,11 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+
 import org.wikipedia.Constants;
+import org.wikipedia.Constants.InvokeSource;
 import org.wikipedia.R;
 import org.wikipedia.WikipediaApp;
 import org.wikipedia.activity.BaseActivity;
@@ -51,7 +46,6 @@ import org.wikipedia.main.MainActivity;
 import org.wikipedia.navtab.NavTab;
 import org.wikipedia.page.linkpreview.LinkPreviewDialog;
 import org.wikipedia.page.tabs.TabActivity;
-import org.wikipedia.readinglist.AddToReadingListDialog;
 import org.wikipedia.readinglist.database.ReadingListPage;
 import org.wikipedia.search.SearchActivity;
 import org.wikipedia.search.SearchInvokeSource;
@@ -76,6 +70,13 @@ import org.wikipedia.wiktionary.WiktionaryDialog;
 import java.util.HashSet;
 import java.util.Set;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.view.ViewCompat;
+import androidx.preference.PreferenceManager;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -84,6 +85,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 
 import static org.wikipedia.Constants.ACTIVITY_REQUEST_SETTINGS;
+import static org.wikipedia.Constants.InvokeSource.LINK_PREVIEW_MENU;
 import static org.wikipedia.settings.Prefs.isLinkPreviewEnabled;
 import static org.wikipedia.util.UriUtil.visitInExternalBrowser;
 
@@ -147,8 +149,9 @@ public class PageActivity extends BaseActivity implements PageFragment.Callback,
         try {
             setContentView(R.layout.activity_page);
         } catch (Exception e) {
-            if (e.getMessage().contains("WebView")
-                    || ThrowableUtil.getInnermostThrowable(e).getMessage().contains("WebView")) {
+            if ((!TextUtils.isEmpty(e.getMessage()) && e.getMessage().toLowerCase().contains("webview"))
+                    || (!TextUtils.isEmpty(ThrowableUtil.getInnermostThrowable(e).getMessage())
+                    && ThrowableUtil.getInnermostThrowable(e).getMessage().toLowerCase().contains("webview"))) {
                 // If the system failed to inflate our activity because of the WebView (which could
                 // be one of several types of exceptions), it likely means that the system WebView
                 // is in the process of being updated. In this case, show the user a message and
@@ -221,7 +224,8 @@ public class PageActivity extends BaseActivity implements PageFragment.Callback,
     }
 
     private void finishActionMode() {
-        for (ActionMode mode : currentActionModes) {
+        Set<ActionMode> actionModesToFinish = new HashSet<>(currentActionModes);
+        for (ActionMode mode : actionModesToFinish) {
             mode.finish();
         }
         currentActionModes.clear();
@@ -244,7 +248,6 @@ public class PageActivity extends BaseActivity implements PageFragment.Callback,
 
     @Override
     public boolean onSearchRequested() {
-        showToolbar();
         openSearchActivity(SearchInvokeSource.TOOLBAR, null);
         return true;
     }
@@ -265,10 +268,6 @@ public class PageActivity extends BaseActivity implements PageFragment.Callback,
         } else {
             supportFinishAfterTransition();
         }
-    }
-
-    public void showToolbar() {
-        // TODO: make toolbar visible, via CoordinatorLayout
     }
 
     /** @return True if the contextual action bar is open. */
@@ -463,7 +462,7 @@ public class PageActivity extends BaseActivity implements PageFragment.Callback,
         bottomSheetPresenter.dismiss(getSupportFragmentManager());
     }
 
-    public void showAddToListDialog(@NonNull PageTitle title, @NonNull AddToReadingListDialog.InvokeSource source) {
+    public void showAddToListDialog(@NonNull PageTitle title, @NonNull InvokeSource source) {
         bottomSheetPresenter.showAddToListDialog(getSupportFragmentManager(), title, source, listDialogDismissListener);
     }
 
@@ -539,18 +538,12 @@ public class PageActivity extends BaseActivity implements PageFragment.Callback,
     }
 
     @Override
-    public void onPageShowToolbar() {
-        showToolbar();
-    }
-
-    @Override
     public void onPageHideSoftKeyboard() {
         hideSoftKeyboard();
     }
 
     @Override
-    public void onPageAddToReadingList(@NonNull PageTitle title,
-                                       @NonNull AddToReadingListDialog.InvokeSource source) {
+    public void onPageAddToReadingList(@NonNull PageTitle title, @NonNull InvokeSource source) {
         showAddToListDialog(title, source);
     }
 
@@ -586,10 +579,7 @@ public class PageActivity extends BaseActivity implements PageFragment.Callback,
 
     @Override
     public void onPageSetToolbarElevationEnabled(boolean enabled) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            toolbarContainerView.setElevation(DimenUtil
-                    .dpToPx(enabled ? DimenUtil.getDimension(R.dimen.toolbar_default_elevation) : 0));
-        }
+        toolbarContainerView.setElevation(DimenUtil.dpToPx(enabled ? DimenUtil.getDimension(R.dimen.toolbar_default_elevation) : 0));
     }
 
     @Override
@@ -605,7 +595,7 @@ public class PageActivity extends BaseActivity implements PageFragment.Callback,
 
     @Override
     public void onLinkPreviewAddToList(@NonNull PageTitle title) {
-        showAddToListDialog(title, AddToReadingListDialog.InvokeSource.LINK_PREVIEW_MENU);
+        showAddToListDialog(title, LINK_PREVIEW_MENU);
     }
 
     @Override

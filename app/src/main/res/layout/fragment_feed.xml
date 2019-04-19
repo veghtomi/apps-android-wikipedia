@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.SwipeRefreshLayout
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -52,7 +52,7 @@
             <TextView
                 android:id="@+id/fragment_feed_customize_button"
                 style="@style/App.Button"
-                app:backgroundTint="?attr/paper_color"
+                app:backgroundTint="?attr/button_background_color"
                 android:textColor="?attr/secondary_text_color"
                 android:text="@string/feed_configure_onboarding_action"/>
 
@@ -60,4 +60,4 @@
 
     </FrameLayout>
 
-</android.support.v4.widget.SwipeRefreshLayout>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

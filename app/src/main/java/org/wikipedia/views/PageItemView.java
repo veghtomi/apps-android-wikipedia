@@ -2,16 +2,6 @@ package org.wikipedia.views;
 
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.AttrRes;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.chip.Chip;
-import android.support.design.chip.ChipGroup;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +9,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.facebook.drawee.view.SimpleDraweeView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 
 import org.wikipedia.R;
 import org.wikipedia.readinglist.database.ReadingList;
@@ -26,10 +18,18 @@ import org.wikipedia.util.DimenUtil;
 import org.wikipedia.util.FeedbackUtil;
 import org.wikipedia.util.ResourceUtil;
 import org.wikipedia.util.StringUtil;
-import org.wikipedia.util.log.L;
 
 import java.util.List;
 
+import androidx.annotation.AttrRes;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.core.widget.TextViewCompat;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -151,16 +151,22 @@ public class PageItemView<T> extends ConstraintLayout {
         }
     }
 
+    public void setListItemImageDimensions(int width, int height) {
+        imageView.getLayoutParams().width = width;
+        imageView.getLayoutParams().height = height;
+        requestLayout();
+    }
+
     public void setUpChipGroup(List<ReadingList> readingLists) {
         chipsScrollView.setVisibility(VISIBLE);
+        chipsScrollView.setFadingEdgeLength(0);
         readingListsChipGroup.removeAllViews();
         for (ReadingList readingList : readingLists) {
             Chip chip = new Chip(readingListsChipGroup.getContext());
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
-                chip.setTextAppearance(R.style.CustomChipStyle);
-            }
+            TextViewCompat.setTextAppearance(chip, R.style.CustomChipStyle);
             chip.setText(readingList.title());
             chip.setClickable(true);
+            chip.setChipBackgroundColorResource(ResourceUtil.getThemedAttributeId(getContext(), R.attr.chip_background_color));
             chip.setOnClickListener(v -> {
                 if (callback != null) {
                     callback.onListChipClick(readingList);
@@ -170,8 +176,11 @@ public class PageItemView<T> extends ConstraintLayout {
         }
     }
 
+    public void hideChipGroup() {
+        chipsScrollView.setVisibility(GONE);
+    }
+
     public void setSearchQuery(@Nullable String searchQuery) {
-        L.d("setSearchQuery " + searchQuery);
         // highlight search term within the text
         StringUtil.boldenKeywordText(titleView, titleView.getText().toString(), searchQuery);
     }
@@ -210,8 +219,6 @@ public class PageItemView<T> extends ConstraintLayout {
     private void init() {
         inflate(getContext(), R.layout.item_page_list_entry, this);
         ButterKnife.bind(this);
-        setClipChildren(false);
-        setClipToPadding(false);
 
         setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         final int topBottomPadding = 16;
